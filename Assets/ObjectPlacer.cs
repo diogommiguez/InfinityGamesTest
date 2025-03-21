@@ -9,9 +9,26 @@ public class ObjectPlacer : MonoBehaviour
     private Plane fullPlane;
     public GameObject m_Cube;
     private bool[,] isTileAvailable = new bool[30, 30];
+    public enum TileType
+    {
+        Empty,      // 0
+        Road,       // 1
+        Tree,       // 2
+        House,      // 3
+        Shop       // 4
+    }
+    TileType[,] cityLayout; // Example 10x10 grid
 
     void Start()
     {
+        cityLayout = new TileType[30, 30]; 
+
+        cityLayout[0, 0] = TileType.Road;
+        cityLayout[1, 1] = TileType.Tree;
+        cityLayout[2, 2] = TileType.House;
+        cityLayout[3, 3] = TileType.Shop;
+        cityLayout[4, 4] = TileType.Empty;
+
         fullPlane = new Plane( new Vector3(0,1,0), new Vector3(0,0.01f,0) );
 
         // -------------------------------------------
@@ -21,10 +38,11 @@ public class ObjectPlacer : MonoBehaviour
             return;
         }
 
-        for(int i =0; i < 30; i+=2)
+        for(int i =0; i < 30; i++)
         {
-            for(int j =0; j < 30; j+=2)
+            for(int j =0; j < 30; j++)
             {
+                isTileAvailable[i,j] = true;
                 // Create a new plane
                 GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 Vector3 localPosition = new Vector3(i,0.01f,j);
@@ -56,7 +74,7 @@ public class ObjectPlacer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        /*
         if (Input.GetMouseButton(0))
         {
             //Create a ray from the Mouse click position
@@ -74,7 +92,7 @@ public class ObjectPlacer : MonoBehaviour
                      m_Cube.transform.position = new Vector3((float)Math.Truncate(hitPoint.x)+0.5f,0.01f,(float)Math.Truncate(hitPoint.z)+0.5f);
             }
         }
-        
+        */
     }
 
     public void PlaceWorldObject(GameObject worldObjectPrefab)
@@ -87,17 +105,49 @@ public class ObjectPlacer : MonoBehaviour
         
         if (fullPlane.Raycast(ray, out enter))
         {
-            //Get the point that is clicked
-            Vector3 hitPoint = ray.GetPoint(enter);
+            // Get the point that is clicked
+            Vector3 mouseWorldPosition = ray.GetPoint(enter);
+
+            // Check if its within city bounds
+            if( IsWithinCityBounds(mouseWorldPosition) == false)
+            {
+                return; // call animation to puff the dragging UI icon
+            }
+
+            // Position in dicrete grid of 1x1 tiles (x,y)
+            Vector2Int gridPosition = GetGridPosition(mouseWorldPosition);
+
+            // Check wether selected tile(s) are available
+            if(isTileAvailable[gridPosition.x,gridPosition.y])
+            {
+                Instantiate(worldObjectPrefab, GetGridPositionInWorldCoordinates(gridPosition), Quaternion.identity);
+                isTileAvailable[gridPosition.x,gridPosition.y] = false;
+                Debug.Log("Object placed");
+            } 
+            else 
+            {
+                Debug.Log("Can't place object");
+                return;
+            }
             
-            // Check if its within city bounds and snap to grid to get tile(s) position(s)
-            Vector3 mouseWorldPosition = hitPoint;
-
-            // Check weather prefab fits into the selected tile(s)
-            // ...
-
-            // Instantiante world object
-            Instantiate(worldObjectPrefab, mouseWorldPosition, Quaternion.identity);
         }
+    }
+
+    bool IsWithinCityBounds(Vector3 worldPosition)
+    {
+        if(worldPosition.x < 0 || worldPosition.x > 30) return false;
+        if(worldPosition.z < 0 || worldPosition.z > 30) return false;
+        return true;
+    }
+
+    Vector2Int GetGridPosition(Vector3 worldPosition)
+    {
+        // add a small y offset to prevent mesh overlap
+        return new Vector2Int((int)Math.Truncate(worldPosition.x),(int)Math.Truncate(worldPosition.z));
+    }
+
+    Vector3 GetGridPositionInWorldCoordinates(Vector2Int gridPosition)
+    {
+        return new Vector3(gridPosition.x,0.01f,gridPosition.y);
     }
 }
