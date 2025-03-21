@@ -2,19 +2,18 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DraggableToWorld : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public GameObject worldObjectPrefab; // Assign a 3D prefab in the Inspector
-    private GameObject objectIcon;
-    private Camera mainCamera;
-    private CanvasGroup canvasGroup;
-
-    public ObjectPlacer objectPlacer;
-    private GameObject rawImageObject;
     public Texture iconTexture;
+    public ObjectPlacer objectPlacer;
+    public GameObject objectPrefab; // Assign a 3D prefab in the Inspector
+    public ObjectType objectType;
+    private CanvasGroup canvasGroup;
+    private GameObject iconObject;
+    
+
     private void Awake()
     {
-        mainCamera = Camera.main;
         canvasGroup = GetComponent<CanvasGroup>();
 
     }
@@ -27,9 +26,9 @@ public class DraggableToWorld : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
         // Spawn the 2d icon
 
-        rawImageObject = new GameObject("ObjectIcon");
-        rawImageObject.transform.SetParent(GameObject.Find("Canvas").transform, false);
-        RawImage rawImage = rawImageObject.AddComponent<RawImage>();
+        iconObject = new GameObject("ObjectIcon");
+        iconObject.transform.SetParent(GameObject.Find("Canvas").transform, false);
+        RawImage rawImage = iconObject.AddComponent<RawImage>();
         rawImage.texture = iconTexture;
 
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
@@ -41,18 +40,18 @@ public class DraggableToWorld : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     public void OnDrag(PointerEventData eventData)
     {   
         // call a function from ObjectPlacer that renders green(free) or red(used) tiles where the mouse pos is (or in a bigger area depending on the prefab area)
-        if (rawImageObject)
+        if (iconObject)
         {            
             // Convert mousePosition from screen space to local space relative to the parent canvas
             Vector2 localPosition;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rawImageObject.GetComponent<RectTransform>().parent.GetComponent<RectTransform>(), // Parent RectTransform
+                iconObject.GetComponent<RectTransform>().parent.GetComponent<RectTransform>(), // Parent RectTransform
                 Input.mousePosition, // Mouse position in screen space
                 null, // Camera, use null if canvas is in "Screen Space - Overlay" mode
                 out localPosition); // Output local position
 
             // Set the position of the icon's RectTransform to the converted mousePosition
-            rawImageObject.GetComponent<RectTransform>().localPosition = localPosition;
+            iconObject.GetComponent<RectTransform>().localPosition = localPosition;
         } 
         else
         {
@@ -64,15 +63,15 @@ public class DraggableToWorld : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     {
         if (objectPlacer != null)
         {
-            objectPlacer.PlaceWorldObject(worldObjectPrefab);
+            objectPlacer.PlaceWorldObject(objectPrefab,objectType);
         }
         else
         {
             Debug.LogError("ObjectPlacer reference is missing!");
         }
-        
+
         // Destroy the UI icon when placed in the world
-        Destroy(rawImageObject);
+        Destroy(iconObject);
 
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;

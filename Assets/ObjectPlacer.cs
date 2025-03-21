@@ -7,27 +7,22 @@ public class ObjectPlacer : MonoBehaviour
     public Material planeMaterial1;
     public Material planeMaterial2;
     private Plane fullPlane;
-    public GameObject m_Cube;
     private bool[,] isTileAvailable = new bool[30, 30];
-    public enum TileType
+    /*public enum TileType
     {
         Empty,      // 0
         Road,       // 1
         Tree,       // 2
         House,      // 3
         Shop       // 4
-    }
-    TileType[,] cityLayout; // Example 10x10 grid
+    }*/
+    ObjectType[,] cityLayout; // Example 10x10 grid
 
     void Start()
     {
-        cityLayout = new TileType[30, 30]; 
+        cityLayout = new ObjectType[30, 30]; 
 
-        cityLayout[0, 0] = TileType.Road;
-        cityLayout[1, 1] = TileType.Tree;
-        cityLayout[2, 2] = TileType.House;
-        cityLayout[3, 3] = TileType.Shop;
-        cityLayout[4, 4] = TileType.Empty;
+        cityLayout[0, 0] = ObjectType.Empty;
 
         fullPlane = new Plane( new Vector3(0,1,0), new Vector3(0,0.01f,0) );
 
@@ -95,7 +90,7 @@ public class ObjectPlacer : MonoBehaviour
         */
     }
 
-    public void PlaceWorldObject(GameObject worldObjectPrefab)
+    public void PlaceWorldObject(GameObject worldObjectPrefab, ObjectType objectType)
     {
         //Create a ray from the Mouse click position
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -120,13 +115,18 @@ public class ObjectPlacer : MonoBehaviour
             // Check wether selected tile(s) are available
             if(isTileAvailable[gridPosition.x,gridPosition.y])
             {
-                Instantiate(worldObjectPrefab, GetGridPositionInWorldCoordinates(gridPosition), Quaternion.identity);
+                GameObject worldObject = Instantiate(worldObjectPrefab, GetGridPositionInWorldCoordinates(gridPosition), Quaternion.identity);
+                
+                GameObject objectsParent = GameObject.Find("Objects");
+                if(objectsParent == null){
+                    objectsParent = new GameObject("Objects");
+                } 
+                worldObject.transform.SetParent(objectsParent.transform, false); // 'false' keeps world position
+                worldObject.name = objectType.ToString();
                 isTileAvailable[gridPosition.x,gridPosition.y] = false;
-                Debug.Log("Object placed");
             } 
             else 
             {
-                Debug.Log("Can't place object");
                 return;
             }
             
