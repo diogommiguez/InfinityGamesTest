@@ -5,16 +5,15 @@ using UnityEngine.UI;
 public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public Texture iconTexture;
+    public Vector2Int iconPositionOffset = new Vector2Int(50,50);
     public ObjectPlacer objectPlacer;
     public ObjectData objectData;
     private CanvasGroup canvasGroup;
     private GameObject iconObject;
-    
 
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
-
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -33,12 +32,13 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
         rectTransform.sizeDelta = new Vector2(100, 100); // Set width & height
         rectTransform.anchoredPosition = Input.mousePosition; // Center in Canvas
+
+        objectPlacer.CreatePlacementPlane(objectData.objectSize);
         
     }
 
     public void OnDrag(PointerEventData eventData)
     {   
-        // call a function from ObjectPlacer that renders green(free) or red(used) tiles where the mouse pos is (or in a bigger area depending on the prefab area)
         if (iconObject)
         {            
             // Convert mousePosition from screen space to local space relative to the parent canvas
@@ -49,6 +49,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 null, // Camera, use null if canvas is in "Screen Space - Overlay" mode
                 out localPosition); // Output local position
 
+            localPosition += new Vector2(iconPositionOffset.x,iconPositionOffset.y);
             // Set the position of the icon's RectTransform to the converted mousePosition
             iconObject.GetComponent<RectTransform>().localPosition = localPosition;
         } 
@@ -56,6 +57,8 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             Debug.LogError("Object icon reference is missing!");
         }
+        objectPlacer.UpdateFocusedTilePosition(Input.mousePosition);
+        objectPlacer.UpdatePlacementPlane(objectData.objectSize);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -63,6 +66,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         int objectPlacement = 0;
         if (objectPlacer != null)
         {
+            objectPlacer.DestroyPlacementPlane();
             objectPlacement = objectPlacer.PlaceWorldObject(objectData);
         }
         else

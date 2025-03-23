@@ -119,6 +119,37 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &85537764
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 85537765}
+  m_Layer: 0
+  m_Name: City Layout Builder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &85537765
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85537764}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -429,9 +460,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   iconTexture: {fileID: 2800000, guid: a5f6ccc6f2b749cb58e7349138fd85e2, type: 3}
+  iconPositionOffset: {x: 0, y: 0}
   objectPlacer: {fileID: 1487086469}
-  objectPrefab: {fileID: 237892163850921562, guid: 8e838b5b5a2f28865af0bcca9f9e5e08, type: 3}
-  objectType: 2
+  objectData:
+    objectPrefab: {fileID: 237892163850921562, guid: 8e838b5b5a2f28865af0bcca9f9e5e08, type: 3}
+    objectType: 2
+    objectSize: {x: 2, y: 2}
 --- !u!114 &610319379
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -610,37 +644,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1473295779
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1473295780}
-  m_Layer: 0
-  m_Name: Object Placer Mesh
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &1473295780
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1473295779}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1487086470}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1484521966
 GameObject:
   m_ObjectHideFlags: 0
@@ -693,9 +696,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   iconTexture: {fileID: 2800000, guid: b7fa854a583b5e67fb37ab5b3c69e7a1, type: 3}
+  iconPositionOffset: {x: 0, y: 0}
   objectPlacer: {fileID: 1487086469}
-  objectPrefab: {fileID: 237892163850921562, guid: 57a6b053814343b81bf684e85853546c, type: 3}
-  objectType: 3
+  objectData:
+    objectPrefab: {fileID: 309072755831945040, guid: 84643683621c83013ae25293ba69c017, type: 3}
+    objectType: 1
+    objectSize: {x: 1, y: 1}
 --- !u!114 &1484521969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -775,9 +781,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caae59aedd412099497f1a65edb2abfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  parentObject: {fileID: 1473295779}
-  planeMaterial1: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
-  planeMaterial2: {fileID: 10758, guid: 0000000000000000f000000000000000, type: 0}
+  freeTileMaterial: {fileID: 2100000, guid: 491592bb38163bf3cb663fdb9d94f385, type: 2}
+  occupiedTileMaterial: {fileID: 2100000, guid: b180a37e03252b8bca403984ad2091be, type: 2}
+  grassMaterial: {fileID: 2100000, guid: 5d45a2fecfb68a655b76e26c045b30f3, type: 2}
+  roadMaterial: {fileID: 2100000, guid: 15cc445e3f6410f90a1f58aa53ecbfa7, type: 2}
 --- !u!4 &1487086470
 Transform:
   m_ObjectHideFlags: 0
@@ -790,8 +797,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1473295780}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1628195499
@@ -1058,9 +1064,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   iconTexture: {fileID: 2800000, guid: b7fa854a583b5e67fb37ab5b3c69e7a1, type: 3}
+  iconPositionOffset: {x: 0, y: 0}
   objectPlacer: {fileID: 1487086469}
-  objectPrefab: {fileID: 237892163850921562, guid: 57a6b053814343b81bf684e85853546c, type: 3}
-  objectType: 1
+  objectData:
+    objectPrefab: {fileID: 237892163850921562, guid: 57a6b053814343b81bf684e85853546c, type: 3}
+    objectType: 1
+    objectSize: {x: 1, y: 1}
 --- !u!114 &2034035513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1122,3 +1131,4 @@ SceneRoots:
   - {fileID: 1487086470}
   - {fileID: 1812643008}
   - {fileID: 803310852}
+  - {fileID: 85537765}
