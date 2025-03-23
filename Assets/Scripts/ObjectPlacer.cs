@@ -63,7 +63,6 @@ public class ObjectPlacer : MonoBehaviour
                 }
             }
         }
-        
     }
 
     // Update is called once per frame
@@ -90,7 +89,7 @@ public class ObjectPlacer : MonoBehaviour
         */
     }
 
-    public void PlaceWorldObject(GameObject worldObjectPrefab, ObjectType objectType)
+    public int PlaceWorldObject(ObjectData objectData)//)GameObject worldObjectPrefab, ObjectType objectType)
     {
         //Create a ray from the Mouse click position
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -103,41 +102,30 @@ public class ObjectPlacer : MonoBehaviour
             // Get the point that is clicked
             Vector3 mouseWorldPosition = ray.GetPoint(enter);
 
-            // Check if its within city bounds
-            if( IsWithinCityBounds(mouseWorldPosition) == false)
-            {
-                return; // call animation to puff the dragging UI icon
-            }
-
             // Position in dicrete grid of 1x1 tiles (x,y)
             Vector2Int gridPosition = GetGridPosition(mouseWorldPosition);
 
             // Check wether selected tile(s) are available
-            if(isTileAvailable[gridPosition.x,gridPosition.y])
+            if(CheckAvailability(gridPosition,objectData.objectSize))
             {
-                GameObject worldObject = Instantiate(worldObjectPrefab, GetGridPositionInWorldCoordinates(gridPosition), Quaternion.identity);
+                GameObject worldObject = Instantiate(objectData.objectPrefab, GetGridPositionInWorldCoordinates(gridPosition), Quaternion.identity);
                 
                 GameObject objectsParent = GameObject.Find("Objects");
                 if(objectsParent == null){
                     objectsParent = new GameObject("Objects");
                 } 
                 worldObject.transform.SetParent(objectsParent.transform, false); // 'false' keeps world position
-                worldObject.name = objectType.ToString();
-                isTileAvailable[gridPosition.x,gridPosition.y] = false;
+                worldObject.name = objectData.objectType.ToString();
+
+                ChangeAvailability(gridPosition,objectData.objectSize);
             } 
             else 
             {
-                return;
+                return 0;
             }
             
         }
-    }
-
-    bool IsWithinCityBounds(Vector3 worldPosition)
-    {
-        if(worldPosition.x < 0 || worldPosition.x > 30) return false;
-        if(worldPosition.z < 0 || worldPosition.z > 30) return false;
-        return true;
+        return 1;
     }
 
     Vector2Int GetGridPosition(Vector3 worldPosition)
@@ -149,5 +137,31 @@ public class ObjectPlacer : MonoBehaviour
     Vector3 GetGridPositionInWorldCoordinates(Vector2Int gridPosition)
     {
         return new Vector3(gridPosition.x,0.01f,gridPosition.y);
+    }
+
+    bool CheckAvailability(Vector2Int gridPosition, Vector2Int objectSize)
+    {
+        for(int x = 0; x < objectSize.x; x++)
+        {
+            for(int y = 0; y < objectSize.y; y++)
+            {
+                Debug.Log("x = " + (int)(gridPosition.x + x));
+                if(gridPosition.x + x < 0 || gridPosition.x + x >= 30) return false;
+                if(gridPosition.y + y < 0 || gridPosition.y + y >= 30) return false;   
+                if(!isTileAvailable[gridPosition.x + x,gridPosition.y + y]) return false;
+            }
+        }
+        return true;
+    }
+
+    void ChangeAvailability(Vector2Int gridPosition, Vector2Int objectSize)
+    {
+        for(int x = 0; x < objectSize.x; x++)
+        {
+            for(int y = 0; y < objectSize.y; y++)
+            { 
+                isTileAvailable[gridPosition.x + x,gridPosition.y + y] = false;
+            }
+        }
     }
 }

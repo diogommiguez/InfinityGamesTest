@@ -6,8 +6,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 {
     public Texture iconTexture;
     public ObjectPlacer objectPlacer;
-    public GameObject objectPrefab; // Assign a 3D prefab in the Inspector
-    public ObjectType objectType;
+    public ObjectData objectData;
     private CanvasGroup canvasGroup;
     private GameObject iconObject;
     
@@ -21,15 +20,15 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnBeginDrag(PointerEventData eventData)
     {
         // Make UI icon transparent while dragging
-        canvasGroup.alpha = 0.5f;
+        canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = false;
 
         // Spawn the 2d icon
-
         iconObject = new GameObject("ObjectIcon");
         iconObject.transform.SetParent(GameObject.Find("Canvas").transform, false);
         RawImage rawImage = iconObject.AddComponent<RawImage>();
         rawImage.texture = iconTexture;
+        rawImage.CrossFadeAlpha(0.6f,0,false);
 
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
         rectTransform.sizeDelta = new Vector2(100, 100); // Set width & height
@@ -61,19 +60,33 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        int objectPlacement = 0;
         if (objectPlacer != null)
         {
-            objectPlacer.PlaceWorldObject(objectPrefab,objectType);
+            objectPlacement = objectPlacer.PlaceWorldObject(objectData);
         }
         else
         {
             Debug.LogError("ObjectPlacer reference is missing!");
         }
 
+        switch(objectPlacement){
+            case 0:
+                iconObject.GetComponent<RawImage>().CrossFadeAlpha(0,0.5f,false);
+                Invoke("DestroyIconObject", 0.1f); 
+                break;
+            case 1:
+                Destroy(iconObject);
+                break;
+        }
         // Destroy the UI icon when placed in the world
-        Destroy(iconObject);
-
+        
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
+    }
+
+    void DestroyIconObject()
+    {
+        Destroy(iconObject);
     }
 }
