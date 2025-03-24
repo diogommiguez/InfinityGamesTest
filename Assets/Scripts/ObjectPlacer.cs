@@ -5,7 +5,7 @@ public class ObjectPlacer : MonoBehaviour
 {
     public Material freeTileMaterial;
     public Material occupiedTileMaterial;
-    public Material grassMaterial;
+    public Material SandMaterial;
     public Material roadMaterial;
     private Plane fullPlane;
     private bool[,] isTileAvailable = new bool[30, 30];
@@ -13,6 +13,9 @@ public class ObjectPlacer : MonoBehaviour
     private TerrainType[,] terrainLayout;
     private GameObject placementPlane;
     private Vector2Int focusedTilePosition;
+
+    public float floorHeight = 0.1f;
+    public GameObject roadsParentObject;
 
     void Start()
     {
@@ -25,8 +28,8 @@ public class ObjectPlacer : MonoBehaviour
             for(int j =0; j < 30; j++)
             {
                 // Initializing terrain
-                terrainLayout[i, j] = TerrainType.Grass;
-                if(j == 6) terrainLayout[i, j] = TerrainType.Road;
+                terrainLayout[i, j] = TerrainType.Sand;
+                if(j == 6 || i == 4) terrainLayout[i, j] = TerrainType.Road;
 
                 isTileAvailable[i,j] = true;
             }
@@ -36,29 +39,70 @@ public class ObjectPlacer : MonoBehaviour
 
     void CreateCityTayout()
     {
-        GameObject cityLayout = new GameObject("City Layout");
+        for(int i =0; i < 30; i++)
+        {
+            for(int j =0; j < 30; j++)
+            {
+                // Initializing terrain
+                terrainLayout[i, j] = TerrainType.Sand;
+                isTileAvailable[i,j] = true;
+            }
+        }
+        // ROADS
+        int x_min, x_max, z_min, z_max;
+        foreach(Transform road in roadsParentObject.transform)
+        {
+            x_min = (int)Math.Round(road.localPosition.x - 5 * road.localScale.x);
+            x_max = (int)Math.Round(road.localPosition.x + 5 * road.localScale.x);
+
+            z_min = (int)Math.Round(road.localPosition.z - 5 * road.localScale.z);
+            z_max = (int)Math.Round(road.localPosition.z + 5 * road.localScale.z);
+
+            Debug.Log("xmin = " + x_min);
+            Debug.Log("xmax = " + x_max);
+            Debug.Log("ymin = " + z_min);
+            Debug.Log("ymax = " + z_max);
+            Debug.Log("---");
+            for(int i = x_min; i < x_max; i++)
+            {
+                for(int j = z_min; j < z_max; j++)
+                {
+                    if(i < 0 || i >= 30 || j < 0 || j >= 30)
+                    {
+                        continue;
+                    }
+                    terrainLayout[i,j] = TerrainType.Road;
+                    isTileAvailable[i,j] = false;
+                }
+            }
+            road.localPosition = new Vector3(road.localPosition.x,-floorHeight,road.localPosition.z);
+        }
+        
+        GameObject cityLayout = new GameObject("Terrain");
         cityLayout.transform.SetParent(transform,false);
 
         for(int i =0; i < 30; i++)
         {
             for(int j =0; j < 30; j++)
             {
-                GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                tile.transform.SetParent(cityLayout.transform,false);
-                tile.transform.localScale = new Vector3(0.1f, 1, 0.1f);
-                tile.transform.localPosition = new Vector3(i+0.5f,0.01f,j+0.5f);
-                switch(terrainLayout[i,j]){
-                    case TerrainType.Grass:
-                        tile.name = "Grass(" + i.ToString() + "," + j.ToString() + ")";
-                        tile.GetComponent<Renderer>().material = grassMaterial;
-                        break;
-                    case TerrainType.Road:
-                        tile.name = "Road(" + i.ToString() + "," + j.ToString() + ")";
-                        tile.GetComponent<Renderer>().material = roadMaterial;
-                        break;
+                if(terrainLayout[i,j]==TerrainType.Sand)
+                {
+                    GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    tile.transform.SetParent(cityLayout.transform,false);
+                    tile.transform.localScale = new Vector3(1, floorHeight, 1);
+                    tile.transform.localPosition = new Vector3(i+0.5f,-floorHeight/2.0f,j+0.5f);
+                    tile.name = "Terrain(" + i.ToString() + "," + j.ToString() + ")";
+                    tile.GetComponent<Renderer>().material = SandMaterial;
                 }
+                    /*GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                    tile.transform.SetParent(cityLayout.transform,false);
+                    tile.transform.localScale = new Vector3(0.1f, 1, 0.1f);
+                    tile.transform.localPosition = new Vector3(i+0.5f,floorHeight,j+0.5f);
+                    tile.name = "Terrain(" + i.ToString() + "," + j.ToString() + ")";
+                    tile.GetComponent<Renderer>().material = SandMaterial;*/
             }
         }
+        
     }
 
     void Update()
@@ -99,7 +143,7 @@ public class ObjectPlacer : MonoBehaviour
 
     public void UpdatePlacementPlane(Vector2Int objectSize)
     {
-        placementPlane.transform.localPosition = new Vector3(focusedTilePosition.x + objectSize.x/2.0f , 0.1f ,focusedTilePosition.y + objectSize.y/2.0f);
+        placementPlane.transform.localPosition = new Vector3(focusedTilePosition.x + objectSize.x/2.0f , 0.01f ,focusedTilePosition.y + objectSize.y/2.0f);
 
         int availabilityState = CheckAvailability(focusedTilePosition,objectSize);
         

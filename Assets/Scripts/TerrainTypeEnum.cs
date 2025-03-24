@@ -1,5 +1,5 @@
 public enum TerrainType
 {
     Road,
-    Grass
+    Sand
 }
