@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 
 public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -22,7 +23,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnBeginDrag(PointerEventData eventData)
     {
         // Make UI icon transparent while dragging
-        canvasGroup.alpha = 1f;
+        canvasGroup.alpha = 0.5f;
         canvasGroup.blocksRaycasts = false;
 
         // Spawn the 2d icon
@@ -30,7 +31,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         iconObject.transform.SetParent(GameObject.Find("Canvas").transform, false);
         RawImage rawImage = iconObject.AddComponent<RawImage>();
         rawImage.texture = iconTexture;
-        rawImage.CrossFadeAlpha(0.6f,0,false);
+        rawImage.CrossFadeAlpha(0.8f,0,false);
 
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
         rectTransform.sizeDelta = iconSize; // Set width & height
@@ -78,12 +79,11 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         switch(objectPlacement){
-            case 0:
-                iconObject.GetComponent<RawImage>().CrossFadeAlpha(0,0.5f,false);
-                Invoke("DestroyIconObject", 0.1f); 
+            case 0: // failure in object placement
+                StartCoroutine(ReturnIconToPanel(0.2f));
                 break;
-            case 1:
-                Destroy(iconObject);
+            case 1: // success in object placement
+                StartCoroutine(PuffIcon(0.2f));
                 break;
         }
         // Destroy the UI icon when placed in the world
@@ -92,8 +92,45 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         canvasGroup.blocksRaycasts = true;
     }
 
-    void DestroyIconObject()
+    IEnumerator ReturnIconToPanel(float duration)
     {
+        Vector3 endPosition = transform.position;
+        Vector3 startPosition = iconObject.transform.position;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Lerp position
+            iconObject.transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait for next frame
+        }
+
+        // Destroy icon at the end of the animation
         Destroy(iconObject);
     }
+
+    IEnumerator PuffIcon(float duration)
+    {
+        // Fade out icon
+        iconObject.GetComponent<RawImage>().CrossFadeAlpha(0,duration,false);
+
+        // Squeeze icon (animate scale to zero)
+        Vector3 endScale = new Vector3(0,0,0);
+        Vector3 startScale = iconObject.transform.localScale;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Lerp position
+            iconObject.transform.localScale = Vector3.Lerp(startScale, endScale, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait for next frame
+        }
+
+        // Destroy icon at the end of the animation
+        Destroy(iconObject);
+    }
+
+
 }

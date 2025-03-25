@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections;
 
 public class ObjectPlacer : MonoBehaviour
 {
@@ -208,6 +209,8 @@ public class ObjectPlacer : MonoBehaviour
             worldObject.transform.SetParent(objectsParent.transform, false); // 'false' keeps world position
             worldObject.name = objectData.objectType.ToString();
 
+            StartCoroutine(AnimateSpawnWorldObject(worldObject,0.2f));
+
             ChangeAvailability(focusedTilePosition,objectData.objectSize);
         } 
         else 
@@ -216,6 +219,23 @@ public class ObjectPlacer : MonoBehaviour
         }
             
         return 1;
+    }
+
+    IEnumerator AnimateSpawnWorldObject(GameObject worldObject, float duration)
+    {
+        // Squeeze icon (animate scale to zero)
+        Vector3 endScale = worldObject.transform.localScale;
+        Vector3 startScale = new Vector3(0,0,0);
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Lerp position
+            worldObject.transform.localScale = Vector3.Lerp(startScale, endScale, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait for next frame
+        }
+
     }
 
     Vector2Int GetGridPosition(Vector3 worldPosition)
