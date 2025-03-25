@@ -6,52 +6,48 @@ public class ObjectPlacer : MonoBehaviour
 {
     public Material freeTileMaterial;
     public Material occupiedTileMaterial;
-    public Material SandMaterial;
+    public Material terrainMaterial;
     public Material roadMaterial;
-    private float floorHeight = 0.1f;
-    public GameObject roadsParentObject;
-    public GameObject naturalElementsParentObject;
-    private Plane fullPlane;
+    public GameObject roads;
+    public GameObject naturalElements;
+    private Plane cityBasePlane;
     private bool[,] isTileAvailable = new bool[30, 30];
-   
-    private TerrainType[,] terrainLayout;
+    private TileType[,] tileLayout;
     private GameObject placementPlane;
     private Vector2Int focusedTilePosition;
+    private float floorHeight = 0.1f;
 
     void Start()
     {
-        terrainLayout = new TerrainType[30, 30]; 
+        // Plane at ground level for drag and drop positioning
 
-        fullPlane = new Plane( new Vector3(0,1,0), new Vector3(0,0.01f,0) );
+        cityBasePlane = new Plane( new Vector3(0,1,0), new Vector3(0,0.01f,0) );
 
-        for(int i =0; i < 30; i++)
-        {
-            for(int j =0; j < 30; j++)
-            {
-                // Initializing terrain
-                terrainLayout[i, j] = TerrainType.Sand;
-                if(j == 6 || i == 4) terrainLayout[i, j] = TerrainType.Road;
+        // Update tile type and availability depending on placed roads and natural elements
 
-                isTileAvailable[i,j] = true;
-            }
-        }
         CreateCityTayout();
     }
 
     void CreateCityTayout()
     {
+        tileLayout = new TileType[30, 30]; 
+
+        // Initializing tile layout as terrain and available
+
         for(int i =0; i < 30; i++)
         {
             for(int j =0; j < 30; j++)
             {
-                // Initializing terrain
-                terrainLayout[i, j] = TerrainType.Sand;
+                tileLayout[i, j] = TileType.Terrain;
                 isTileAvailable[i,j] = true;
             }
         }
-        // ROADS
-        int x_min, x_max, z_min, z_max;
-        foreach(Transform road in roadsParentObject.transform)
+
+        // Go through each road object and change tile type and availability state
+
+        int x_min, x_max, z_min, z_max; // bounds of each object
+
+        foreach(Transform road in roads.transform)
         {
             x_min = (int)Math.Round(road.localPosition.x - 5 * road.localScale.x);
             x_max = (int)Math.Round(road.localPosition.x + 5 * road.localScale.x);
@@ -67,15 +63,16 @@ public class ObjectPlacer : MonoBehaviour
                     {
                         continue;
                     }
-                    terrainLayout[i,j] = TerrainType.Road;
+                    tileLayout[i,j] = TileType.Road;
                     isTileAvailable[i,j] = false;
                 }
             }
             road.localPosition = new Vector3(road.localPosition.x,-floorHeight,road.localPosition.z);
         }
 
-        // Natural Elements
-        foreach(Transform naturalElement in naturalElementsParentObject.transform)
+        // Go through each natural element object and change availability state
+
+        foreach(Transform naturalElement in naturalElements.transform)
         {
             x_min = (int)Math.Round(naturalElement.localPosition.x );
             x_max = (int)Math.Round(naturalElement.localPosition.x + naturalElement.localScale.x);
@@ -96,6 +93,8 @@ public class ObjectPlacer : MonoBehaviour
             }
         }
         
+        // Create terrain objects (cubes) where TileType is Terrain and store them in a Terrain GameObject container
+
         GameObject cityLayout = new GameObject("Terrain");
         cityLayout.transform.SetParent(transform,false);
 
@@ -103,49 +102,38 @@ public class ObjectPlacer : MonoBehaviour
         {
             for(int j =0; j < 30; j++)
             {
-                if(terrainLayout[i,j]==TerrainType.Sand)
+                if(tileLayout[i,j]==TileType.Terrain)
                 {
                     GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     tile.transform.SetParent(cityLayout.transform,false);
                     tile.transform.localScale = new Vector3(1, floorHeight, 1);
                     tile.transform.localPosition = new Vector3(i+0.5f,-floorHeight/2.0f,j+0.5f);
                     tile.name = "Terrain(" + i.ToString() + "," + j.ToString() + ")";
-                    tile.GetComponent<Renderer>().material = SandMaterial;
+                    tile.GetComponent<Renderer>().material = terrainMaterial;
                 }
-                    /*GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                    tile.transform.SetParent(cityLayout.transform,false);
-                    tile.transform.localScale = new Vector3(0.1f, 1, 0.1f);
-                    tile.transform.localPosition = new Vector3(i+0.5f,floorHeight,j+0.5f);
-                    tile.name = "Terrain(" + i.ToString() + "," + j.ToString() + ")";
-                    tile.GetComponent<Renderer>().material = SandMaterial;*/
             }
         }
-        
-    }
-
-    void Update()
-    {
-        
     }
 
     public void UpdateFocusedTilePosition(Vector2 mousePosition)
     {
-         //Create a ray from the Mouse click position
+         //Create a ray from the mouse click position
         Ray ray = Camera.main.ScreenPointToRay(mousePosition);
 
         //Initialise the enter variable
         float enter = 0.0f;
         
-        if (fullPlane.Raycast(ray, out enter))
+        if (cityBasePlane.Raycast(ray, out enter))
         {
             // Get the point that is clicked
             Vector3 mouseWorldPosition = ray.GetPoint(enter);
 
-            // Position in dicrete grid of 1x1 tiles (x,y)
+            // Change to discrete grid coordinates
             focusedTilePosition = GetGridPosition(mouseWorldPosition);
         }
     }
     
+    // This creates a visual aid plane, which will be used in the drag and drop mechanism to indicate if it's possible to drop at the hovering location
     public void CreatePlacementPlane(Vector2Int objectSize)
     {
         placementPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -159,6 +147,7 @@ public class ObjectPlacer : MonoBehaviour
         placementPlane.SetActive(false);
     }
 
+    // This updates the placement plane position and changes it's material depending on if it's possible to drop or not
     public void UpdatePlacementPlane(Vector2Int objectSize)
     {
         placementPlane.transform.localPosition = new Vector3(focusedTilePosition.x + objectSize.x/2.0f , 0.01f ,focusedTilePosition.y + objectSize.y/2.0f);
@@ -166,17 +155,17 @@ public class ObjectPlacer : MonoBehaviour
         int availabilityState = CheckAvailability(focusedTilePosition,objectSize);
         
         switch(availabilityState){
-            case -1: // completely off map
+            case -1: // completely off map - don't render 
                 placementPlane.SetActive(false);
                 break;
-            case 0: // occupied or partially off map
+            case 0: // occupied or partially off map - render in "occupied" material
                 if (occupiedTileMaterial != null) 
                     placementPlane.GetComponent<Renderer>().material = occupiedTileMaterial;
                 else
                     Debug.LogWarning("No material assigned to occupied tiles. Using default.");
                 placementPlane.SetActive(true);
                 break;
-            case 1: // free
+            case 1: // free - render in "free" material
                 if (freeTileMaterial != null) 
                     placementPlane.GetComponent<Renderer>().material = freeTileMaterial;
                 else
@@ -194,13 +183,15 @@ public class ObjectPlacer : MonoBehaviour
         else Destroy(placementPlane); 
     }
    
-    public int PlaceWorldObject(ObjectData objectData)//)GameObject worldObjectPrefab, ObjectType objectType)
+    // This function is called when the user drops an object in the city. It checks on the availability of the tiles and if so creates that object at that location
+    public int PlaceWorldObject(ObjectData objectData)
     { 
-        // Check wether selected tile(s) are available
+        // If selected tile(s) are available, create new object!
         if(CheckAvailability(focusedTilePosition,objectData.objectSize) == 1)
         {
             GameObject worldObject = Instantiate(objectData.objectPrefab, GetGridPositionInWorldCoordinates(focusedTilePosition), Quaternion.identity);
             
+            // Placing object in the desired Hierarchy location
             Transform objectsContainerTransform = transform.Find("Objects");
             if(objectsContainerTransform == null){
                 GameObject objectsContainer = new GameObject("Objects");
@@ -210,10 +201,13 @@ public class ObjectPlacer : MonoBehaviour
             worldObject.transform.SetParent(objectsContainerTransform, false); // 'false' keeps world position
             worldObject.name = objectData.objectType.ToString();
 
+            // Animates object spawning
             StartCoroutine(AnimateSpawnWorldObject(worldObject,0.2f));
 
-            ChangeAvailability(focusedTilePosition,objectData.objectSize);
+            // Checks new occupied tiles
+            ChangeAvailability(focusedTilePosition,objectData.objectSize,false);
         } 
+        // If they are not available, return 0 - the UI manager would like to know if we were able to place the object or not
         else 
         {
             return 0;
@@ -273,7 +267,7 @@ public class ObjectPlacer : MonoBehaviour
                     isOffMap = true;
                     continue;
                 }
-                if(!isTileAvailable[gridPosition.x + x,gridPosition.y + y] || terrainLayout[gridPosition.x + x,gridPosition.y + y] == TerrainType.Road) 
+                if(!isTileAvailable[gridPosition.x + x,gridPosition.y + y] || tileLayout[gridPosition.x + x,gridPosition.y + y] == TileType.Road) 
                     isObstructed = true;
                 else 
                     isFree = true;
@@ -289,13 +283,13 @@ public class ObjectPlacer : MonoBehaviour
         return 1;
     }
 
-    void ChangeAvailability(Vector2Int gridPosition, Vector2Int objectSize)
+    void ChangeAvailability(Vector2Int gridPosition, Vector2Int objectSize, bool isAvailable)
     {
         for(int x = 0; x < objectSize.x; x++)
         {
             for(int y = 0; y < objectSize.y; y++)
             { 
-                isTileAvailable[gridPosition.x + x,gridPosition.y + y] = false;
+                isTileAvailable[gridPosition.x + x,gridPosition.y + y] = isAvailable;
             }
         }
     }

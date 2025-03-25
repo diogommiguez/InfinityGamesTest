@@ -22,7 +22,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // Make UI icon transparent while dragging
+        // Make UI icon transparent while dragging and ignore interactions
         canvasGroup.alpha = 0.5f;
         canvasGroup.blocksRaycasts = false;
 
@@ -32,17 +32,18 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         RawImage rawImage = iconObject.AddComponent<RawImage>();
         rawImage.texture = iconTexture;
         rawImage.CrossFadeAlpha(0.8f,0,false);
-
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
         rectTransform.sizeDelta = iconSize; // Set width & height
         rectTransform.anchoredPosition = Input.mousePosition; // Center in Canvas
 
+        // Create a placement plane (visual aid - see in ObjectPlacer class)
         objectPlacer.CreatePlacementPlane(objectData.objectSize);
         
     }
 
     public void OnDrag(PointerEventData eventData)
     {   
+        // Update dragged icon position
         if (iconObject)
         {            
             // Convert mousePosition from screen space to local space relative to the parent canvas
@@ -54,6 +55,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 out localPosition); // Output local position
 
             localPosition += new Vector2(iconPositionOffset.x,iconPositionOffset.y);
+
             // Set the position of the icon's RectTransform to the converted mousePosition
             iconObject.GetComponent<RectTransform>().localPosition = localPosition;
         } 
@@ -61,7 +63,10 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             Debug.LogError("Object icon reference is missing!");
         }
+
+        // Tell objectPlacer which tile we are focusing on now
         objectPlacer.UpdateFocusedTilePosition(Input.mousePosition);
+        // And tell it to update the placement plane
         objectPlacer.UpdatePlacementPlane(objectData.objectSize);
     }
 
@@ -86,12 +91,13 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 StartCoroutine(PuffIcon(0.2f));
                 break;
         }
-        // Destroy the UI icon when placed in the world
         
+        // Set icon to normal transparency and allow interactions
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
     }
 
+    // Animation when object can't be placed: icon floats back to panel
     IEnumerator ReturnIconToPanel(float duration)
     {
         Vector3 endPosition = transform.position;
@@ -110,6 +116,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         Destroy(iconObject);
     }
 
+    // Animation when object can be placed: iconscales to zero as it fades out
     IEnumerator PuffIcon(float duration)
     {
         // Fade out icon
