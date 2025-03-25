@@ -8,16 +8,15 @@ public class ObjectPlacer : MonoBehaviour
     public Material occupiedTileMaterial;
     public Material SandMaterial;
     public Material roadMaterial;
+    private float floorHeight = 0.1f;
+    public GameObject roadsParentObject;
+    public GameObject naturalElementsParentObject;
     private Plane fullPlane;
     private bool[,] isTileAvailable = new bool[30, 30];
    
     private TerrainType[,] terrainLayout;
     private GameObject placementPlane;
     private Vector2Int focusedTilePosition;
-
-    public float floorHeight = 0.1f;
-    public GameObject roadsParentObject;
-    public GameObject naturalElementsParentObject;
 
     void Start()
     {
@@ -202,11 +201,13 @@ public class ObjectPlacer : MonoBehaviour
         {
             GameObject worldObject = Instantiate(objectData.objectPrefab, GetGridPositionInWorldCoordinates(focusedTilePosition), Quaternion.identity);
             
-            GameObject objectsParent = GameObject.Find("Objects");
-            if(objectsParent == null){
-                objectsParent = new GameObject("Objects");
+            Transform objectsContainerTransform = transform.Find("Objects");
+            if(objectsContainerTransform == null){
+                GameObject objectsContainer = new GameObject("Objects");
+                objectsContainer.transform.SetParent(transform,false);
+                objectsContainerTransform = objectsContainer.transform;
             } 
-            worldObject.transform.SetParent(objectsParent.transform, false); // 'false' keeps world position
+            worldObject.transform.SetParent(objectsContainerTransform, false); // 'false' keeps world position
             worldObject.name = objectData.objectType.ToString();
 
             StartCoroutine(AnimateSpawnWorldObject(worldObject,0.2f));
