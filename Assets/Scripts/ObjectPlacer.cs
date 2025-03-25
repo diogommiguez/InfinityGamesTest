@@ -16,6 +16,7 @@ public class ObjectPlacer : MonoBehaviour
 
     public float floorHeight = 0.1f;
     public GameObject roadsParentObject;
+    public GameObject naturalElementsParentObject;
 
     void Start()
     {
@@ -58,11 +59,6 @@ public class ObjectPlacer : MonoBehaviour
             z_min = (int)Math.Round(road.localPosition.z - 5 * road.localScale.z);
             z_max = (int)Math.Round(road.localPosition.z + 5 * road.localScale.z);
 
-            Debug.Log("xmin = " + x_min);
-            Debug.Log("xmax = " + x_max);
-            Debug.Log("ymin = " + z_min);
-            Debug.Log("ymax = " + z_max);
-            Debug.Log("---");
             for(int i = x_min; i < x_max; i++)
             {
                 for(int j = z_min; j < z_max; j++)
@@ -76,6 +72,28 @@ public class ObjectPlacer : MonoBehaviour
                 }
             }
             road.localPosition = new Vector3(road.localPosition.x,-floorHeight,road.localPosition.z);
+        }
+
+        // Natural Elements
+        foreach(Transform naturalElement in naturalElementsParentObject.transform)
+        {
+            x_min = (int)Math.Round(naturalElement.localPosition.x );
+            x_max = (int)Math.Round(naturalElement.localPosition.x + naturalElement.localScale.x);
+
+            z_min = (int)Math.Round(naturalElement.localPosition.z );
+            z_max = (int)Math.Round(naturalElement.localPosition.z + naturalElement.localScale.z);
+
+            for(int i = x_min; i < x_max; i++)
+            {
+                for(int j = z_min; j < z_max; j++)
+                {
+                    if(i < 0 || i >= 30 || j < 0 || j >= 30)
+                    {
+                        continue;
+                    }
+                    isTileAvailable[i,j] = false;
+                }
+            }
         }
         
         GameObject cityLayout = new GameObject("Terrain");

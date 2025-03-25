@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public Texture iconTexture;
+    public Vector2Int iconSize = new Vector2Int(75,75);
     public Vector2Int iconPositionOffset = new Vector2Int(50,50);
     public ObjectPlacer objectPlacer;
     public ObjectData objectData;
@@ -14,6 +15,8 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
+        RawImage iconRawImage = gameObject.GetComponent<RawImage>();
+        iconRawImage.texture = iconTexture;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -30,7 +33,7 @@ public class UIObjectManager : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         rawImage.CrossFadeAlpha(0.6f,0,false);
 
         RectTransform rectTransform = rawImage.GetComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(100, 100); // Set width & height
+        rectTransform.sizeDelta = iconSize; // Set width & height
         rectTransform.anchoredPosition = Input.mousePosition; // Center in Canvas
 
         objectPlacer.CreatePlacementPlane(objectData.objectSize);
